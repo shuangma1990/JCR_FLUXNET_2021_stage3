@@ -1,0 +1,332 @@
+library(colorRamps)
+library(ggplot2)
+## function for R2, ignore NA ##
+# r squared method 1  Y is obs mn is modeled
+r2 = function(Y, mn){
+  round(summary(lm(Y ~ mn))$r.squared,3)
+}
+## function for RMSE ##
+RMSE = function(m, o){
+  round(sqrt(mean((m - o)^2, na.rm=T)),3)
+}
+# 
+# projectname='S4_P31'
+projectname='S4_P25'
+# idir = paste0('/Users/shuangma/RESEARCH/WORKFLOW/JCR_FLUXNET_2021_stage3/S4_P6/before_ABGB_cost_function_correction/output/')
+# odir = paste0('/Users/shuangma/RESEARCH/WORKFLOW/JCR_FLUXNET_2021_stage3/S4_P6/before_ABGB_cost_function_correction/figures/')idir = paste0('/Users/shuangma/RESEARCH/WORKFLOW/JCR_FLUXNET_2021_stage3/S4_P6/before_ABGB_cost_function_correction/output/')
+idir = paste0('/Users/shuangma/RESEARCH/WORKFLOW/JCR_FLUXNET_2021_stage3/',projectname,'/output/') # change input here #1
+# odir = paste0('/Users/shuangma/RESEARCH/WORKFLOW/JCR_FLUXNET_2021_stage3/S4_P23/figures/') # change input here #2
+#### plot hist####
+siteinfo_list <- list()
+pdf_name_list <- list()
+siteinfo_list[[1]] <- read.csv(paste0('/Users/shuangma/RESEARCH/WORKFLOW/JCR_FLUXNET_2021_stage3/S2_LATLON2CBF_edited.csv'))
+siteinfo_list[[2]] <- read.csv(paste0('/Users/shuangma/RESEARCH/WORKFLOW/JCR_FLUXNET_2021_stage3/siteid_4yrs.csv'))
+siteinfo_list[[3]] <- read.csv(paste0('/Users/shuangma/RESEARCH/WORKFLOW/JCR_FLUXNET_2021_stage3/siteid_5yrs.csv'))
+# siteinfo_list[[1]] <- read.csv(paste0('/Users/shuangma/RESEARCH/WORKFLOW/JCR_FLUXNET_2021_stage3/S2_LATLON2CBF_edited_halfsites.csv'))
+# siteinfo_list[[2]] <- read.csv(paste0('/Users/shuangma/RESEARCH/WORKFLOW/JCR_FLUXNET_2021_stage3/siteid_4yrs_halfsites.csv'))
+# siteinfo_list[[3]] <- read.csv(paste0('/Users/shuangma/RESEARCH/WORKFLOW/JCR_FLUXNET_2021_stage3/siteid_5yrs_halfsites.csv'))
+
+for (iexp in c(1:2,6:7)){
+  pdf_name_list[[1]] <- paste0("S6_all_sites_exp",iexp,"_medMCMC.pdf") # option 1
+  pdf_name_list[[2]] <- paste0("S6_4yr_sites_exp",iexp,"_medMCMC.pdf")
+  pdf_name_list[[3]] <- paste0("S6_5yr_sites_exp",iexp,"_medMCMC.pdf")
+  # pdf_name_list[[1]] <- paste0("S6_1-4m_sites_exp",iexp,".pdf") # option 2
+
+    for (i in 1:3){ # change input here   # option 1
+    # for (i in 1){ # change input here # option 2
+      
+      siteinfo <- siteinfo_list[[i]]
+      siteids <- (siteinfo$SITE_ID)
+      parmin <- c(1.00000000000000e-05,1.00000000000000e-05,0.200000000000000,0.0100000000000000,2.50000000000000e-05,0.000100000000000000,0.000100000000000000,5.00000000000000e-05,1.00000000000000e-07,1.20000000000000,0.0100000000000000,5,1,1,1,1,1,1,1,1.50000000000000,1,1,0.0100000000000000,0.0100000000000000,0.0100000000000000,0.0100000000000000,0.0100000000000000,1.00000000000000e-07,1,1,0.200000000000000,0.200000000000000,0.0100000000000000,0.0100000000000000,0.0100000000000000,0.0100000000000000,1.79000000000000,100000000,258.150000000000,273.150000000000,0.0100000000000000,299.150000000000,263.150000000000,100000000,0.350000000000000,100000000,1.00000000000000e-06,240,1.00000000000000e-05,10,1,0.200000000000000,0.0100000000000000,0.00100000000000000,1,0.0100000000000000,268.150000000000,0.100000000000000,1,0.00100000000000000,0.00100000000000000,0.100000000000000,0.100000000000000,2,0.100000000000000,0.0100000000000000,0.0100000000000000,0.00100000000000000)
+      parmax <- c(0.0100000000000000,0.0100000000000000,0.800000000000000,1,0.00100000000000000,0.0100000000000000,0.0100000000000000,0.00500000000000000,0.00100000000000000,2,0.500000000000000,200,2000,2000,2000,100000,100000,2000,200000,10,10000,10000,1,1,1,1,1,1.00000000000000e-05,100,10000,0.800000000000000,0.800000000000000,0.100000000000000,100,100,1,5.79000000000000,140,273.150000000000,288.150000000000,10,318.150000000000,286.150000000000,1,1,1,10000,270,1,1000,100,1,1,0.900000000000000,3,20,323.150000000000,10,1.01000000000000,0.500000000000000,0.500000000000000,10,300,22,6,1,1,0.100000000000000)
+      
+      # --------------------------   change input   here   -------------------------
+      varnames = c("CH4", "ET", "NBE","ABGB", "SCF","ch4_co2","SM","fV","fW","fT","fCH4","fTch4") # P22 and older
+      varnames = c("CH4", "ET", "NBE","ABGB", "SCF","EWT","ch4_co2","SM","fV","fW","fT","fCH4","fTch4",
+                   "paw","puw","sm_PAW","sm_PUW") # P23 and newer
+      noobs = 6 # if EWT is used as independent dta, =6 if EWT is used in MCMC, P26 and after may use EWT as obs 
+      # ----------------------------------------------------------------------------
+      lg_mod <- list()
+      # for (s in 1:4){ # option 1
+        
+      for (s in 1:(length(siteids))){ # option 1
+      # for (s in c(1,8,15,19,20,26,27,31,35,39,48,51,58,80)){ # option 2
+        print(paste0('s=',s))
+        filename = list.files(idir, pattern=paste0(siteids[s],"_exp",iexp,"_pdf.csv"))
+        df <- read.csv(paste0(idir, filename))
+        df$sitename<-rep(siteids[s],nrow(df))
+        
+        filename = list.files('/Users/shuangma/RESEARCH/WORKFLOW/JCR_FLUXNET_2021_stage3/S3/met/',pattern=paste0(siteids[s]))
+        met <- read.csv(paste0('/Users/shuangma/RESEARCH/WORKFLOW/JCR_FLUXNET_2021_stage3/S3/met/',filename))
+        met$sitename<-rep(siteids[s],nrow(met))
+        
+        filename = list.files('/Users/shuangma/RESEARCH/WORKFLOW/JCR_FLUXNET_2021_stage3/S3/obs/',pattern=paste0(siteids[s]))
+        obs <- read.csv(paste0('/Users/shuangma/RESEARCH/WORKFLOW/JCR_FLUXNET_2021_stage3/S3/obs/',filename))
+        obs$sitename<-rep(siteids[s],nrow(obs))
+
+        filename = list.files('/Users/shuangma/RESEARCH/WORKFLOW/JCR_FLUXNET_2021_stage3/S3/ind/',pattern=paste0(siteids[s]))
+        ind <- read.csv(paste0('/Users/shuangma/RESEARCH/WORKFLOW/JCR_FLUXNET_2021_stage3/S3/ind/',filename))
+        ind$sitename<-rep(siteids[s],nrow(ind))
+        
+        mod <- list()
+        for (ivar in 1:length(varnames)){
+          filename = list.files(idir, pattern=paste0(siteids[s],"_exp",iexp,"_",varnames[ivar],".csv"))
+          data <- read.csv(paste0(idir, filename),header = F,row.names = 1)
+          mod[[ivar]] <- data.frame(t(data))
+          mod[[ivar]]$sitename<-rep(siteids[s],nrow(mod[[ivar]]))
+        }
+      
+        if (s==1){
+          for (ivar in 1:length(varnames)){
+            lg_mod[[ivar]] <- mod[[ivar]]      
+          }
+          lg_df <- df
+          lg_met <- met
+          lg_obs <- obs
+          lg_ind <- ind
+        }else{
+          for (ivar in 1:length(varnames)){
+            lg_mod[[ivar]] <-rbind(lg_mod[[ivar]],mod[[ivar]])
+          }
+          lg_df <- rbind(lg_df,df)
+          lg_met <- rbind(lg_met,met)
+          lg_obs <- rbind(lg_obs,obs)
+          lg_ind <- rbind(lg_ind,ind)
+        }
+        
+      }
+      
+      # replace any -9999 to NA
+      lg_obs[lg_obs==-9999]<-NA
+      lg_met[lg_met==-9999]<-NA
+      lg_ind[lg_ind==-9999]<-NA
+      
+      setwd(paste0('/Users/shuangma/RESEARCH/WORKFLOW/JCR_FLUXNET_2021_stage3/',projectname,'/S6_scatterplot/'))
+      pdf(pdf_name_list[[i]],width = 15., height = 8.)
+      par(mfrow=c(4,6),mar=c(3,3,3,3),oma=c(2,2,2,2))
+      obscolnames <- varnames[1:noobs] # varnames = c("CH4","ET", "NBE","ABGB", "SCF","EWT,"ch4_co2","SM")
+      for (ivar in 1:noobs){
+          o = lg_obs[[obscolnames[ivar]]]
+          m = lg_mod[[ivar]]$v50
+          # sum(is.infinite(m))  # lm() can't deal with inf values
+          # m[is.infinite(m)] = NA
+          # sum(is.infinite(m))
+          plot(o,m,main=varnames[ivar], col=alpha("black",0.1),
+               xlim=range(o,quantile(m,prob=c(0.05,0.95),na.rm=T),na.rm=T),
+               ylim=range(o,quantile(m,prob=c(0.05,0.95),na.rm=T),na.rm=T))
+          # plot(o,m,main=varnames[ivar], col=alpha("black",0.1))
+          mtext(paste0("mod"),side = 2, line = 2,outer=F)
+          mtext(paste0("obs"),side = 1, line = 2,outer=F)
+          mtext(paste0("rmse=",RMSE(o,m)),side = 3, line = -1,outer=F,adj=0.2)
+          mtext(paste0("r2=",r2(o,m)),side = 3, line = -2,outer=F,adj=0.2)
+          mtext(paste0("model min=",round(min(m,na.rm=T),4)),side = 3, line = -3,outer=F,adj=0.2)
+          mtext(paste0("model max=",round(max(m,na.rm=T),4)),side = 3, line = -4,outer=F,adj=0.2)
+      }
+      
+      #-------------------------------------
+      o = lg_ind[['GRACE_EWT']]
+      m = lg_mod[[6]]$v50
+      sum(is.infinite(m))  # lm() can't deal with inf values
+      m[is.infinite(m)] = NA
+      sum(is.infinite(m))
+      plot(o,m,main='EWT',xlim=range(o,quantile(m,prob=c(0.05,0.95),na.rm=T),na.rm=T),ylim=range(o,quantile(m,prob=c(0.02,0.98),na.rm=T),na.rm=T))
+      mtext(paste0("mod"),side = 2, line = 2,outer=F)
+      mtext(paste0("obs"),side = 1, line = 2,outer=F)
+      mtext(paste0("rmse=",RMSE(o,m)),side = 3, line = -1,outer=F,adj=0.2)
+      mtext(paste0("r2=",r2(o,m)),side = 3, line = -2,outer=F,adj=0.2)
+      #-------------------------------------
+      # soil moisture and ch4
+      # par(mfrow=c(3,4), mar=c(2,2,2,2))
+      smindex = which(varnames=="SM")
+      ch4_co2_index = which(varnames=="ch4_co2")
+      CH4_index = which(varnames=="CH4")
+      plot(lg_mod[[smindex]]$v50, lg_mod[[CH4_index]]$v50, col=alpha("red",0.1))
+      mtext(paste0("CH4 emission (gC/m2/day)"),side = 2, line = 2,outer=F)
+      mtext(paste0("soil moisture (0-1)"),side = 1, line = 2,outer=F)
+      #-------------------------------------
+      # soil moisture and ch4
+      plot(lg_mod[[smindex]]$v50, lg_mod[[CH4_index]]$v50, col=alpha("red",0.1),
+           xlim=c(0,1.2),ylim=c(0,1))
+      mtext(paste0("CH4 emission (gC/m2/day)"),side = 2, line = 2,outer=F)
+      mtext(paste0("soil moisture (0-1)"),side = 1, line = 2,outer=F)
+      
+      x <- lg_mod[[ch4_co2_index]]$v50
+      x[x==Inf]=NA
+      x[x==-Inf]=NA      
+      xrange = quantile(x, probs = c(0.01,0.99) , na.rm = TRUE)
+      x[x<xrange[1]]<-NA
+      x[x>xrange[2]]<-NA
+      # normal space
+      hist(x,xlim=xrange, main="distribution of ch4/co2")
+      mtext(paste0("med =",round(median(x,na.rm=T),4)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(x,na.rm=T),4)),side = 3, line = -4,outer=F,adj=0.2)
+      # log space
+      hist(log(x), main="distribution of log ch4/co2")
+      mtext(paste0("med =",round(median(log(x),4))),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(log(x),na.rm=T),4)),side = 3, line = -4,outer=F,adj=0.2)
+      
+      hist(lg_df$S_fv,main="distribution of S_fv (1-100)")
+      mtext(paste0("med =",round(median(lg_df$S_fv),2)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(lg_df$S_fv),2)),side = 3, line = -4,outer=F,adj=0.2)
+      hist(log(lg_df$S_fv), main="distribution of log S_fv")
+      # mtext(paste0("mean =",round(mean(log(lg_mod[[ch4_co2_index]]$v50),2))),side = 3, line = -4,outer=F,adj=0.2)
+      data_inf <- log(lg_df$S_fv)
+      data_inf[data_inf==Inf]=NA
+      data_inf[data_inf==-Inf]=NA
+      mtext(paste0("med =",round(median(data_inf),2)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(data_inf,na.rm=T),2)),side = 3, line = -4,outer=F,adj=0.2)
+      # hist(lg_df$PUW_hydr_cond,main="dist of PUW_hydr_cond")
+      # mtext(paste0("med =",round(median(lg_df$PUW_hydr_cond),10)),side = 3, line = -2,outer=F,adj=0.2)
+      # mtext(paste0("mean =",round(mean(lg_df$PUW_hydr_cond),10)),side = 3, line = -4,outer=F,adj=0.2)
+      # hist(lg_df$PAW_hydr_cond,main="dist of PAW_hydr_cond")
+      # mtext(paste0("med =",round(median(lg_df$PAW_hydr_cond),10)),side = 3, line = -2,outer=F,adj=0.2)
+      # mtext(paste0("mean =",round(mean(lg_df$PAW_hydr_cond),10)),side = 3, line = -4,outer=F,adj=0.2)
+      hist(lg_df$r_ch4,main="distribution of r_ch4 (1e-3-0.9)")
+      mtext(paste0("med =",round(median(lg_df$r_ch4),2)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(lg_df$r_ch4),2)),side = 3, line = -4,outer=F,adj=0.2)
+      hist(log(lg_df$r_ch4), main="distribution of log r_ch4")
+      mtext(paste0("med =",round(median(log(lg_df$r_ch4),2))),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(log(lg_df$r_ch4),na.rm=T),2)),side = 3, line = -4,outer=F,adj=0.2)
+      
+      hist(lg_df$Q10rhco2,main="distribution of Q10rhco2")
+      mtext(paste0("med =",round(median(lg_df$Q10rhco2),2)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(lg_df$Q10rhco2),2)),side = 3, line = -4,outer=F,adj=0.2)
+      hist(log(lg_df$Q10rhco2), main="distribution of log Q10rhco2")
+      data_inf <- log(lg_df$Q10rhco2)
+      data_inf[data_inf==Inf]=NA
+      data_inf[data_inf==-Inf]=NA
+      mtext(paste0("med =",round(median(data_inf),2)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(data_inf,na.rm=T),2)),side = 3, line = -4,outer=F,adj=0.2)
+
+      hist(lg_df$Q10ch4,main="distribution of Q10ch4")
+      mtext(paste0("med =",round(median(lg_df$Q10ch4),2)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(lg_df$Q10ch4),2)),side = 3, line = -4,outer=F,adj=0.2)
+      hist(log(lg_df$Q10ch4), main="distribution of log Q10ch4")
+      data_inf <- log(lg_df$Q10ch4)
+      data_inf[data_inf==Inf]=NA
+      data_inf[data_inf==-Inf]=NA
+      mtext(paste0("med =",round(median(data_inf),2)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(data_inf,na.rm=T),2)),side = 3, line = -4,outer=F,adj=0.2)      
+      
+      varindex = which(varnames=="paw")
+      hist(lg_mod[[varindex]]$v50,main="dist of PAW")
+      mtext(paste0("med =",round(median(lg_mod[[varindex]]$v50),2)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(lg_mod[[varindex]]$v50),2)),side = 3, line = -4,outer=F,adj=0.2)
+
+      varindex = which(varnames=="puw")
+      hist(lg_mod[[varindex]]$v50,main="dist of PUW")
+      mtext(paste0("med =",round(median(lg_mod[[varindex]]$v50),2)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(lg_mod[[varindex]]$v50),2)),side = 3, line = -4,outer=F,adj=0.2)
+      
+      varindex = which(varnames=="sm_PAW")
+      hist(lg_mod[[varindex]]$v50,main="dist of sm_PAW")
+      mtext(paste0("med =",round(median(lg_mod[[varindex]]$v50),2)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(lg_mod[[varindex]]$v50),2)),side = 3, line = -4,outer=F,adj=0.2)
+      
+      varindex = which(varnames=="sm_PUW")
+      hist(lg_mod[[varindex]]$v50,main="dist of sm_PUW")
+      mtext(paste0("med =",round(median(lg_mod[[varindex]]$v50),2)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(lg_mod[[varindex]]$v50),2)),side = 3, line = -4,outer=F,adj=0.2)
+      
+      hist(lg_df$PAW_z,main="distribution of PAW_z")
+      mtext(paste0("med =",round(median(lg_df$PAW_z),2)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(lg_df$PAW_z),2)),side = 3, line = -4,outer=F,adj=0.2)
+      hist(log(lg_df$PAW_z), main="distribution of log PAW_z")
+      data_inf <- log(lg_df$PAW_z)
+      data_inf[data_inf==Inf]=NA
+      data_inf[data_inf==-Inf]=NA
+      mtext(paste0("med =",round(median(data_inf),2)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(data_inf,na.rm=T),2)),side = 3, line = -4,outer=F,adj=0.2) 
+      
+      hist(lg_df$PAW_por,main="distribution of PAW_por")
+      mtext(paste0("med =",round(median(lg_df$PAW_por),2)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(lg_df$PAW_por),2)),side = 3, line = -4,outer=F,adj=0.2)
+      hist(log(lg_df$PAW_por), main="distribution of log PAW_por")
+      data_inf <- log(lg_df$PAW_por)
+      data_inf[data_inf==Inf]=NA
+      data_inf[data_inf==-Inf]=NA
+      mtext(paste0("med =",round(median(data_inf),2)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(data_inf,na.rm=T),2)),side = 3, line = -4,outer=F,adj=0.2) 
+      
+      hist(lg_df$max_infil,main="distribution of max_infil")
+      mtext(paste0("med =",round(median(lg_df$max_infil),2)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(lg_df$max_infil),2)),side = 3, line = -4,outer=F,adj=0.2)
+      hist(log(lg_df$max_infil), main="distribution of log max_infil")
+      data_inf <- log(lg_df$max_infil)
+      data_inf[data_inf==Inf]=NA
+      data_inf[data_inf==-Inf]=NA
+      mtext(paste0("med =",round(median(data_inf),2)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(data_inf,na.rm=T),2)),side = 3, line = -4,outer=F,adj=0.2) 
+      
+      hist(lg_df$field_cap,main="distribution of field_cap")
+      mtext(paste0("med =",round(median(lg_df$field_cap),2)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(lg_df$field_cap),2)),side = 3, line = -4,outer=F,adj=0.2)
+      hist(log(lg_df$field_cap), main="distribution of log field_cap")
+      data_inf <- log(lg_df$field_cap)
+      data_inf[data_inf==Inf]=NA
+      data_inf[data_inf==-Inf]=NA
+      mtext(paste0("med =",round(median(data_inf),2)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(data_inf,na.rm=T),2)),side = 3, line = -4,outer=F,adj=0.2) 
+      
+      hist(lg_df$moisture,main="distribution of moisture")
+      mtext(paste0("med =",round(median(lg_df$moisture),2)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(lg_df$moisture),2)),side = 3, line = -4,outer=F,adj=0.2)
+      hist(log(lg_df$moisture), main="distribution of log moisture")
+      data_inf <- log(lg_df$moisture)
+      data_inf[data_inf==Inf]=NA
+      data_inf[data_inf==-Inf]=NA
+      mtext(paste0("med =",round(median(data_inf),2)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(data_inf,na.rm=T),2)),side = 3, line = -4,outer=F,adj=0.2) 
+      
+      hist(lg_df$thetas_opt,main="distribution of thetas_opt")
+      mtext(paste0("med =",round(median(lg_df$thetas_opt),2)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(lg_df$thetas_opt),2)),side = 3, line = -4,outer=F,adj=0.2)
+      hist(log(lg_df$thetas_opt), main="distribution of log thetas_opt")
+      data_inf <- log(lg_df$thetas_opt)
+      data_inf[data_inf==Inf]=NA
+      data_inf[data_inf==-Inf]=NA
+      mtext(paste0("med =",round(median(data_inf),2)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(data_inf,na.rm=T),2)),side = 3, line = -4,outer=F,adj=0.2) 
+      
+      hist(lg_df$fwc,main="distribution of fwc")
+      mtext(paste0("med =",round(median(lg_df$fwc),2)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(lg_df$fwc),2)),side = 3, line = -4,outer=F,adj=0.2)
+      hist(log(lg_df$fwc), main="distribution of log fwc")
+      data_inf <- log(lg_df$fwc)
+      data_inf[data_inf==Inf]=NA
+      data_inf[data_inf==-Inf]=NA
+      mtext(paste0("med =",round(median(data_inf),2)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(data_inf,na.rm=T),2)),side = 3, line = -4,outer=F,adj=0.2) 
+     
+      x <- lg_mod[[ch4_co2_index]]$v50
+      x[x==Inf]=NA
+      x[x==-Inf]=NA      
+      xrange = quantile(x, probs = c(0.01,0.99) , na.rm = TRUE)
+      x[x<xrange[1]]<-NA
+      x[x>xrange[2]]<-NA
+      # normal space
+      hist(x,xlim=xrange, main="distribution of ch4/co2")
+      mtext(paste0("med =",round(median(x,na.rm=T),4)),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(x,na.rm=T),4)),side = 3, line = -4,outer=F,adj=0.2)
+      # log space
+      hist(log(x), main="distribution of log ch4/co2")
+      mtext(paste0("med =",round(median(log(x),4))),side = 3, line = -2,outer=F,adj=0.2)
+      mtext(paste0("mean =",round(mean(log(x),na.rm=T),4)),side = 3, line = -4,outer=F,adj=0.2)
+
+      mtext(pdf_name_list[[i]],side = 3, line = -1,outer=T)
+      
+      # plot(lg_mod)
+      dev.off()
+    
+    }
+    
+
+} # end of iexp 
+# 
+# which(lg_modET$v50< (-200)) # 3119
+# 
+# lg_modET[3119,]
+# lg_modET[5094,]
+# lg_modET[5084:5099,]
+
+
